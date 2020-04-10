@@ -68,52 +68,37 @@ int main() {
 	std::cout << glGetString(GL_VERSION) << std::endl;
 
 	float positions[6] = {
-			-0.5f, -0.5f,    // bottom-left
-			0.0f, 0.5f,        // top-center
-			0.5f, -0.5f        // bottom-right
+			-0.5f, -0.5f,  // bottom-left
+			0.0f, 0.5f,    // top-center
+			0.5f, -0.5f    // bottom-right
 	};
 
-	float colors[9] = {
-			101.0f / 255.0f, 153.0f / 255.0f, 153.0f / 255.0f,
-			244.0f / 255.0f, 121.0f / 255.0f, 31.0f / 255.0f,
-			101.0f / 255.0f, 153.0f / 255.0f, 153.0f / 255.0f
-	};
-
-	unsigned int buffer[2];
-	glGenBuffers(2, buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
+	unsigned int buffer;
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	// probably you'll provide a struct for your vertex attributes and data
 	// such as stride
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
 
-	glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr);
-
 	std::string vertexShader =
 			"#version 450 core\n"
 			"\n"
 			"layout(location = 0) in vec4 inPosition;\n"
-			"layout(location = 1) in vec4 inColor;\n"
-			"out vec4 color;\n"
 			"\n"
 			"void main()\n"
 			"{\n"
 			"    gl_Position = inPosition;\n"
-			"    color = inColor;\n"
 			"}\n";
 	std::string fragmentShader =
 			"#version 450 core\n"
 			"\n"
-			"in vec4 color;\n"
-			"out vec4 fragColor;\n"
+			"layout(location = 0) out vec4 color;\n"
 			"\n"
 			"void main()\n"
 			"{\n"
-			"    fragColor = color;\n"
+			"    color = vec4(1.0, 0.0, 0.0, 1.0);\n"
 			"}\n";
 	unsigned int shader = CreateShader(vertexShader, fragmentShader);
 	glUseProgram(shader);
