@@ -3,6 +3,48 @@
 
 #include <iostream>
 
+static unsigned int CompileShader(unsigned int type, const std::string &source) {
+	unsigned int id = glCreateShader(type);
+	const char *src = source.c_str();
+	glShaderSource(id, 1, &src, nullptr);
+	glCompileShader(id);
+
+	int result;
+	// iv is the type
+	glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+	if (!result) {
+		int length;
+		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+		char message[length];
+		glGetShaderInfoLog(id, length, &length, message);
+		std::cout << "Failed to compile "
+				  << (type == GL_VERTEX_SHADER ? "vertex" : "fragment")
+				  << " shader!"
+				  << std::endl;
+		std::cout << message << std::endl;
+		glDeleteShader;
+		return 0;
+	}
+
+	return id;
+}
+
+static unsigned int CreateShader(const std::string &vertexShader, const std::string &fragmentShader) {
+	unsigned int program = glCreateProgram();
+	unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+	unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+
+	glAttachShader(program, vs);
+	glAttachShader(program, fs);
+	glLinkProgram(program);
+	glValidateProgram(program);
+
+	glDeleteShader(vs);
+	glDeleteShader(fs);
+
+	return program;
+}
+
 int main() {
 	GLFWwindow *window;
 
@@ -11,7 +53,7 @@ int main() {
 		return -1;
 
 	/* Create a windowed mode window and its OpenGL context */
-	window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+	window = glfwCreateWindow(640, 480, "Hello World", nullptr, nullptr);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -26,21 +68,55 @@ int main() {
 	std::cout << glGetString(GL_VERSION) << std::endl;
 
 	float positions[6] = {
-			-0.5f, -0.5f,
-			0.0f, 0.5f,
-			0.5f, -0.5f
+			-0.5f, -0.5f,    // bottom-left
+			0.0f, 0.5f,        // top-center
+			0.5f, -0.5f        // bottom-right
 	};
 
-	unsigned int buffer;
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+	float colors[9] = {
+			101.0f / 255.0f, 153.0f / 255.0f, 153.0f / 255.0f,
+			244.0f / 255.0f, 121.0f / 255.0f, 31.0f / 255.0f,
+			101.0f / 255.0f, 153.0f / 255.0f, 153.0f / 255.0f
+	};
 
+	unsigned int buffer[2];
+	glGenBuffers(2, buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	// probably you'll provide a struct for your vertex attributes and data
 	// such as stride
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
 
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr);
+
+	std::string vertexShader =
+			"#version 450 core\n"
+			"\n"
+			"layout(location = 0) in vec4 inPosition;\n"
+			"layout(location = 1) in vec4 inColor;\n"
+			"out vec4 color;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    gl_Position = inPosition;\n"
+			"    color = inColor;\n"
+			"}\n";
+	std::string fragmentShader =
+			"#version 450 core\n"
+			"\n"
+			"in vec4 color;\n"
+			"out vec4 fragColor;\n"
+			"\n"
+			"void main()\n"
+			"{\n"
+			"    fragColor = color;\n"
+			"}\n";
+	unsigned int shader = CreateShader(vertexShader, fragmentShader);
+	glUseProgram(shader);
 
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window)) {
@@ -55,7 +131,7 @@ int main() {
 		/* Poll for and process events */
 		glfwPollEvents();
 	}
-
+	glDeleteProgram(shader);
 	glfwTerminate();
 	return 0;
 }
