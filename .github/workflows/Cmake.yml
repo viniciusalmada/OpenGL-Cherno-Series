@@ -21,6 +21,7 @@ jobs:
     # Runs a set of commands using the runners shell
     - name: Run cmake program
       run: |
+        sudo apt-get install libglew-dev libglfw3-dev
         mkdir cmake-build
         cmake -S . -B cmake-build
         cd cmake-build
