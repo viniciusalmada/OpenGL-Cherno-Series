@@ -27,7 +27,7 @@ jobs:
         cd cmake-build
         make
         mkdir out
-        echo "./TutoCherno" > out/run.sh
+        echo "#\!/bin/bash\n./TutoCherno" > out/run.sh
         mv TutoCherno out
         chmod a+x out/run.sh
         chmod a+x out/TutoCherno
