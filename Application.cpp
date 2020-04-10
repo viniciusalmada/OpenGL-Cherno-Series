@@ -86,7 +86,7 @@ int main() {
 		return -1;
 	
 	/* Create a windowed mode window and its OpenGL context */
-	window = glfwCreateWindow(640, 480, "Hello World", nullptr, nullptr);
+	window = glfwCreateWindow(480, 480, "Hello World", nullptr, nullptr);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -100,10 +100,14 @@ int main() {
 	
 	std::cout << glGetString(GL_VERSION) << std::endl;
 	
-	float positions[6] = {
-			-0.5f, -0.5f,  // bottom-left
-			0.0f, 0.5f,    // top-center
-			0.5f, -0.5f    // bottom-right
+	float positions[] = {
+			-0.5f, -0.5f,
+			+0.5f, -0.5f,
+			+0.5f, +0.5f,
+			
+			+0.5f, +0.5f,
+			-0.5f, +0.5f,
+			-0.5f, -0.5f
 	};
 	
 	unsigned int buffer;
@@ -123,7 +127,7 @@ int main() {
 		/* Render here */
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 		
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
