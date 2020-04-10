@@ -26,4 +26,8 @@ jobs:
         cmake -S . -B cmake-build
         cd cmake-build
         make
-        ./TutoCherno
+        
+    - uses: actions/upload-artifact@v1
+      with:
+        name: TutoCherno
+        path: .
