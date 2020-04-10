@@ -7,6 +7,6 @@ set(neededLibs GLEW glfw GL)
 
 add_compile_definitions(GLEW_STATIC)
 
-add_executable(TutoCherno main.cpp)
+add_executable(TutoCherno Application.cpp)
 
 target_link_libraries(TutoCherno ${neededLibs})
