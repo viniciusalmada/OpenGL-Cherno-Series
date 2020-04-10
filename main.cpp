@@ -82,24 +82,22 @@ int main() {
 	// such as stride
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
 
-	std::string vertexShader =
-			"#version 450 core\n"
-			"\n"
-			"layout(location = 0) in vec4 inPosition;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    gl_Position = inPosition;\n"
-			"}\n";
-	std::string fragmentShader =
-			"#version 450 core\n"
-			"\n"
-			"layout(location = 0) out vec4 color;\n"
-			"\n"
-			"void main()\n"
-			"{\n"
-			"    color = vec4(1.0, 0.0, 0.0, 1.0);\n"
-			"}\n";
+	std::string vertexShader = R"glsl(
+		#version 450 core
+		layout(location = 0) in vec4 position;
+		void main(){
+		gl_Position = position;
+		}
+	)glsl";
+
+	std::string fragmentShader = R"glsl(
+		#version 450 core
+		layout(location = 0) out vec4 color;
+		void main()
+		{
+		color = vec4(1.0, 0.0, 0.0, 1.0);
+		}
+	)glsl";
 	unsigned int shader = CreateShader(vertexShader, fragmentShader);
 	glUseProgram(shader);
 
