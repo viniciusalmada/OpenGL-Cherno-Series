@@ -5,32 +5,26 @@
 #include <fstream>
 #include <sstream>
 
+#define VERTEX_SHADER_PATH "res/shaders/Vertex.glsl"
+#define FRAGMENT_SHADER_PATH "res/shaders/Fragment.glsl"
+
 struct ShaderProgramSource {
 	std::string VertexSource;
 	std::string FragmentSource;
 };
 
-static ShaderProgramSource ParseShader(const std::string &filePath) {
-	std::ifstream stream(filePath);
-	
-	enum class ShaderType {
-		NONE = -1, VERTEX = 0, FRAGMENT = 1
-	};
+static ShaderProgramSource ParseShader() {
+	std::ifstream stream = std::ifstream(VERTEX_SHADER_PATH);
 	
 	std::string line;
 	std::stringstream ss[2];
-	ShaderType type = ShaderType::NONE;
 	while (getline(stream, line)) {
-		if (line.find("#shader") != std::string::npos) {
-			if (line.find("vertex") != std::string::npos)
-				type = ShaderType::VERTEX;
-			else if (line.find("fragment") != std::string::npos)
-				type = ShaderType::FRAGMENT;
-			else
-				type = ShaderType::NONE;
-		} else {
-			ss[(int(type))] << line << '\n';
-		}
+		ss[0] << line << '\n';
+	}
+	
+	stream = std::ifstream(FRAGMENT_SHADER_PATH);
+	while (getline(stream, line)) {
+		ss[1] << line << '\n';
 	}
 	
 	return ShaderProgramSource{ss[0].str(), ss[1].str()};
@@ -125,7 +119,7 @@ int main() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	
-	ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
+	ShaderProgramSource source = ParseShader();
 	unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
 	glUseProgram(shader);
 	
