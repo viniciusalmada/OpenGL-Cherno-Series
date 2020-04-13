@@ -1,6 +1,11 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+// Include all GLM core / GLSL features
+#include <glm/glm.hpp> // vec2, vec3, mat4, radians
+// Include all GLM extensions
+#include <glm/ext.hpp> // perspective, translate, rotate
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -9,17 +14,15 @@
 #define FRAGMENT_SHADER_PATH "res/shaders/Fragment.glsl"
 
 
-static void GLClearError() {
-	while (glGetError() != GL_NO_ERROR);
-}
-
-static bool GLLogCall(const char *function, const char *file, int line) {
-	while (GLenum error = glGetError()) {
-		std::cout << "[OpenGL Error] (" << error << "): " << function <<
-		          " " << file << ":" << line << std::endl;
-		return false;
-	}
-	return true;
+glm::mat4 mpv() {
+	glm::mat4 Proj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+	glm::mat4 View = glm::lookAt(
+			glm::vec3(1.0f, 1.0f, 1.0f),
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f)
+	);
+	glm::mat4 Model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+	return Proj * View * Model;
 }
 
 struct ShaderProgramSource {
