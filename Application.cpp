@@ -13,11 +13,16 @@
 #define VERTEX_SHADER_PATH "res/shaders/Vertex.glsl"
 #define FRAGMENT_SHADER_PATH "res/shaders/Fragment.glsl"
 
+#define COLOR(R, G, B) (R)/255.0f, (G)/255.0f, (B)/255.0f
 
 glm::mat4 mpv() {
-	glm::mat4 Proj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+	glm::mat4 Proj = glm::perspective(
+			glm::radians(45.0f),
+			4.0f / 3.0f,
+			0.1f,
+			100.0f);
 	glm::mat4 View = glm::lookAt(
-			glm::vec3(1.0f, 1.0f, 1.0f),
+			glm::vec3(0.0f, 1.0f, 1.0f),
 			glm::vec3(0.0f, 0.0f, 0.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f)
 	);
@@ -90,18 +95,30 @@ static unsigned int CreateShader(const std::string &vertexShader, const std::str
 }
 
 int main() {
+	const int WIDTH = 480;
+	const int HEIGHT = 480;
 	GLFWwindow *window;
 	
 	/* Initialize the library */
 	if (!glfwInit())
 		return -1;
 	
+	glfwWindowHint(GL_LINE_SMOOTH_HINT, 4);
+	
 	/* Create a windowed mode window and its OpenGL context */
-	window = glfwCreateWindow(480, 480, "Hello World", nullptr, nullptr);
+	window = glfwCreateWindow(WIDTH, HEIGHT, "Hello World", nullptr, nullptr);
 	if (!window) {
 		glfwTerminate();
 		return -1;
 	}
+	
+	glfwSetWindowSizeCallback(window, [](GLFWwindow *wind, int w, int h) -> void {
+		glViewport(0, 0, w, h);
+	});
+	
+	glfwSetCursorPosCallback(window, [](GLFWwindow *wind, double xpos, double ypos) -> void {
+		std::cout << "x = " << xpos << "  y = " << ypos << std::endl;
+	});
 	
 	/* Make the window's context current */
 	glfwMakeContextCurrent(window);
@@ -124,21 +141,37 @@ int main() {
 			2, 3, 0
 	};
 	
-	unsigned int buffers[2];
-	glGenBuffers(1, &buffers[0]);
+	float colors[] = {
+			COLOR(255.0f, 107.0f, 107.f),
+			COLOR(255.0f, 107.0f, 107.f),
+			COLOR(85.0f, 98.0f, 112.f),
+			COLOR(85.0f, 98.0f, 112.f),
+	};
+	
+	unsigned int buffers[3];
+	glGenBuffers(3, buffers);
+	
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
-	
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, nullptr);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr);
 	
-	glGenBuffers(1, &buffers[1]);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr);
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[2]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	
 	ShaderProgramSource source = ParseShader();
 	unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
 	glUseProgram(shader);
+	
+	glm::mat4 m = mpv();
+	
+	int loc = glGetUniformLocation(shader, "mvp");
+	glUniformMatrix4fv(loc, 1, false, glm::value_ptr(m));
 	
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window)) {

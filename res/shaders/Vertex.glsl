@@ -1,7 +1,11 @@
 #version 450 core
 
-layout(location = 0) in vec4 position;
+uniform mat4 mvp;
+layout(location = 0) in vec4 inPosition;
+layout(location = 1) in vec4 inColor;
+out vec4 color;
 
 void main() {
-    gl_Position = position;
+    gl_Position = mvp * inPosition;
+    color = inColor;
 }
