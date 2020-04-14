@@ -15,6 +15,16 @@
 
 #define COLOR(R, G, B) (R)/255.0f, (G)/255.0f, (B)/255.0f
 
+float eyeX = 0.0f;
+float eyeY = 0.0f;
+float eyeZ = 1.0f;
+
+float centerX = 0.0f;
+float centerY = 0.0f;
+float centerZ = 0.0f;
+
+float step = 0.25f;
+
 glm::mat4 mpv() {
 	glm::mat4 Proj = glm::perspective(
 			glm::radians(20.0f),
@@ -22,8 +32,8 @@ glm::mat4 mpv() {
 			0.1f,
 			90.0f);
 	glm::mat4 View = glm::lookAt(
-			glm::vec3(2.0f, 1.0f, 1.0f),
-			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(eyeX, eyeY, eyeZ),
+			glm::vec3(centerX, centerY, centerZ),
 			glm::vec3(0.0f, 1.0f, 0.0f)
 	);
 	glm::mat4 Model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
@@ -34,6 +44,8 @@ struct ShaderProgramSource {
 	std::string VertexSource;
 	std::string FragmentSource;
 };
+
+void draw(unsigned int shader);
 
 static ShaderProgramSource ParseShader() {
 	std::ifstream stream = std::ifstream(VERTEX_SHADER_PATH);
@@ -54,7 +66,7 @@ static ShaderProgramSource ParseShader() {
 
 static unsigned int CompileShader(unsigned int type, const std::string &source) {
 	unsigned int id = glCreateShader(type);
-	const char *src = source.c_str();
+	const char* src = source.c_str();
 	glShaderSource(id, 1, &src, nullptr);
 	glCompileShader(id);
 	
@@ -97,7 +109,7 @@ static unsigned int CreateShader(const std::string &vertexShader, const std::str
 int main() {
 	const int WIDTH = 480;
 	const int HEIGHT = 480;
-	GLFWwindow *window;
+	GLFWwindow* window;
 	
 	/* Initialize the library */
 	if (!glfwInit())
@@ -112,12 +124,62 @@ int main() {
 		return -1;
 	}
 	
-	glfwSetWindowSizeCallback(window, [](GLFWwindow *wind, int w, int h) -> void {
+	glfwSetWindowSizeCallback(window, [](GLFWwindow* wind, int w, int h) -> void {
 		glViewport(0, 0, w, h);
 	});
 	
-	glfwSetCursorPosCallback(window, [](GLFWwindow *wind, double xpos, double ypos) -> void {
-		std::cout << "x = " << xpos << "  y = " << ypos << std::endl;
+	glfwSetCursorPosCallback(window, [](GLFWwindow* wind, double xpos, double ypos) -> void {
+//		std::cout << "x = " << xpos << "  y = " << ypos << std::endl;
+	});
+	
+	glfwSetKeyCallback(window, [](GLFWwindow* wind, int key, int scanCode, int action, int mods) -> void {
+		if (action != GLFW_PRESS) return;
+		switch (key) {
+			case GLFW_KEY_W:
+				eyeZ -= step;
+				break;
+			case GLFW_KEY_S:
+				eyeZ += step;
+				break;
+			case GLFW_KEY_A:
+				eyeX -= step;
+				break;
+			case GLFW_KEY_D:
+				eyeX += step;
+				break;
+			case GLFW_KEY_Q:
+				eyeY -= step;
+				break;
+			case GLFW_KEY_E:
+				eyeY += step;
+				break;
+			case GLFW_KEY_I:
+				centerZ -= step;
+				break;
+			case GLFW_KEY_K:
+				centerZ += step;
+				break;
+			case GLFW_KEY_J:
+				centerX -= step;
+				break;
+			case GLFW_KEY_L:
+				centerX += step;
+				break;
+			case GLFW_KEY_U:
+				centerY -= step;
+				break;
+			case GLFW_KEY_O:
+				centerY += step;
+				break;
+			default:
+				break;
+		}
+		std::cout << "x=" << eyeX << "  y=" << eyeY << "  z=" << eyeZ << std::endl;
+		ShaderProgramSource source = ParseShader();
+		unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
+		glUseProgram(shader);
+		
+		draw(shader);
 	});
 	
 	/* Make the window's context current */
@@ -218,26 +280,30 @@ int main() {
 	unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
 	glUseProgram(shader);
 	
-	glm::mat4 m = mpv();
 	
-	int loc = glGetUniformLocation(shader, "mvp");
-	glUniformMatrix4fv(loc, 1, false, glm::value_ptr(m));
 	
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window)) {
 		/* Render here */
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, nullptr);
+		draw(shader);
 		
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
 		
 		/* Poll for and process events */
-		glfwPollEvents();
+		glfwWaitEvents();
 	}
 	glDeleteProgram(shader);
 	
 	glfwTerminate();
 	return 0;
+}
+
+void draw(unsigned int shader) {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glm::mat4 m = mpv();
+	
+	int loc = glGetUniformLocation(shader, "mvp");
+	glUniformMatrix4fv(loc, 1, false, glm::value_ptr(m));
+	glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, nullptr);
 }
