@@ -17,12 +17,12 @@
 
 glm::mat4 mpv() {
 	glm::mat4 Proj = glm::perspective(
-			glm::radians(45.0f),
+			glm::radians(20.0f),
 			4.0f / 3.0f,
 			0.1f,
-			100.0f);
+			90.0f);
 	glm::mat4 View = glm::lookAt(
-			glm::vec3(0.0f, 1.0f, 1.0f),
+			glm::vec3(2.0f, 1.0f, 1.0f),
 			glm::vec3(0.0f, 0.0f, 0.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f)
 	);
@@ -126,26 +126,76 @@ int main() {
 	if (glewInit() != GLEW_OK)
 		std::cout << "Error!" << std::endl;
 	
+	glEnable(GL_DEPTH_TEST); // enable depth-testing
+	
 	std::cout << glGetString(GL_VERSION) << std::endl;
 	std::cout << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-	
+	/*
+	 *
+	 *    (11)--(10)5
+	 *   /      /  |
+	 * (8)--(9)/   |
+	 * 3-----2(7)  4
+	 * |     |    /
+	 * |     |   /
+	 * 0-----1(6)
+	 *
+	 */
 	float positions[] = {
-			-0.5f, -0.5f, 0.0f,
-			+0.5f, -0.5f, 0.0f,
-			+0.5f, +0.5f, 0.0f,
-			-0.5f, +0.5f, 0.0f,
+			-0.5f, -0.5f, 0.0f, // 0
+			+0.5f, -0.5f, 0.0f, // 1 (6)
+			+0.5f, +0.5f, 0.0f, // 2 (7) (9)
+			-0.5f, +0.5f, 0.0f, // 3 (8)
+			
+			+0.5f, -0.5f, -0.5f, // 4
+			+0.5f, +0.5f, -0.5f, // 5 (10)
+			+0.5f, -0.5f, 0.0f,  // 6 (1)
+			+0.5f, +0.5f, 0.0f,  // 7 (2)
+			
+			-0.5f, +0.5f, 0.0f,  // 8 (3)
+			+0.5f, +0.5f, 0.0f,  // 9 (2)
+			+0.5f, +0.5f, -0.5f, // 10 (5)
+			-0.5f, +0.5f, -0.5f, // 11
+			
+			-0.5f, -0.5f, 0.0f,  // 12 (0)
+			-0.5f, +0.5f, 0.0f,  // 13 (3)
+			-0.5f, +0.5f, -0.5f, // 14 (11)
+			-0.5f, -0.5f, -0.5f, // 15
 	};
-	
 	unsigned int indices[] = {
 			0, 1, 2,
-			2, 3, 0
+			2, 3, 0,
+			
+			6, 4, 5,
+			7, 6, 5,
+			
+			8, 9, 10,
+			10, 11, 8,
+			
+			12, 13, 14,
+			14, 15, 12,
 	};
 	
 	float colors[] = {
-			COLOR(255.0f, 107.0f, 107.f),
-			COLOR(255.0f, 107.0f, 107.f),
-			COLOR(85.0f, 98.0f, 112.f),
-			COLOR(85.0f, 98.0f, 112.f),
+			COLOR(255.0f, 0.0f, 0.f),
+			COLOR(255.0f, 0.0f, 0.f),
+			COLOR(255.0f, 0.0f, 0.f),
+			COLOR(255.0f, 0.0f, 0.f),
+			
+			COLOR(0.0f, 255.0f, 0.f),
+			COLOR(0.0f, 255.0f, 0.f),
+			COLOR(0.0f, 255.0f, 0.f),
+			COLOR(0.0f, 255.0f, 0.f),
+			
+			COLOR(0.0f, 0.0f, 255.f),
+			COLOR(0.0f, 0.0f, 255.f),
+			COLOR(0.0f, 0.0f, 255.f),
+			COLOR(0.0f, 0.0f, 255.f),
+			
+			COLOR(0.0f, 255.0f, 0.f),
+			COLOR(0.0f, 255.0f, 0.f),
+			COLOR(0.0f, 255.0f, 0.f),
+			COLOR(0.0f, 255.0f, 0.f),
 	};
 	
 	unsigned int buffers[3];
@@ -176,9 +226,9 @@ int main() {
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window)) {
 		/* Render here */
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, nullptr);
 		
 		/* Swap front and back buffers */
 		glfwSwapBuffers(window);
