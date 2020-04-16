@@ -15,9 +15,9 @@
 
 #define COLOR(R, G, B) (R)/255.0f, (G)/255.0f, (B)/255.0f
 
-float eyeX = 0.0f;
-float eyeY = 0.0f;
-float eyeZ = 1.0f;
+float eyeX = 1.0f;
+float eyeY = 0.75f;
+float eyeZ = 2.0f;
 
 float centerX = 0.0f;
 float centerY = 0.0f;
@@ -28,9 +28,10 @@ float step = 0.25f;
 glm::mat4 mpv() {
 	glm::mat4 Proj = glm::perspective(
 			glm::radians(20.0f),
-			4.0f / 3.0f,
+			4.0f / 4.0f,
 			0.1f,
 			90.0f);
+//	glm::mat4 Proj = glm::frustum()
 	glm::mat4 View = glm::lookAt(
 			glm::vec3(eyeX, eyeY, eyeZ),
 			glm::vec3(centerX, centerY, centerZ),
@@ -38,6 +39,21 @@ glm::mat4 mpv() {
 	);
 	glm::mat4 Model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
 	return Proj * View * Model;
+}
+
+glm::mat4 mv() {
+	glm::mat4 View = glm::lookAt(
+			glm::vec3(eyeX, eyeY, eyeZ),
+			glm::vec3(centerX, centerY, centerZ),
+			glm::vec3(0.0f, 1.0f, 0.0f)
+	);
+	glm::mat4 Model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+	return View * Model;
+}
+
+glm::mat4 nm() {
+	glm::mat4 Model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+	return glm::inverseTranspose(Model);
 }
 
 struct ShaderProgramSource {
@@ -174,7 +190,8 @@ int main() {
 			default:
 				break;
 		}
-		std::cout << "x=" << eyeX << "  y=" << eyeY << "  z=" << eyeZ << std::endl;
+		std::cout << "ex=" << eyeX << " ey=" << eyeY << " ez=" << eyeZ
+		          << "cx= " << centerX << " cy=" << centerY << " cz=" << centerZ << std::endl;
 		ShaderProgramSource source = ParseShader();
 		unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
 		glUseProgram(shader);
@@ -218,11 +235,23 @@ int main() {
 			+0.5f, +0.5f, 0.0f,  // 9 (2)
 			+0.5f, +0.5f, -0.5f, // 10 (5)
 			-0.5f, +0.5f, -0.5f, // 11
+	};
+	
+	float normals[] = {
+			+0.0f, +0.0f, 1.0f, // 0
+			+0.0f, +0.0f, 1.0f, // 0
+			+0.0f, +0.0f, 1.0f, // 0
+			+0.0f, +0.0f, 1.0f, // 0
 			
-			-0.5f, -0.5f, 0.0f,  // 12 (0)
-			-0.5f, +0.5f, 0.0f,  // 13 (3)
-			-0.5f, +0.5f, -0.5f, // 14 (11)
-			-0.5f, -0.5f, -0.5f, // 15
+			+0.0f, +1.0f, 0.0f, // 0
+			+0.0f, +1.0f, 0.0f, // 0
+			+0.0f, +1.0f, 0.0f, // 0
+			+0.0f, +1.0f, 0.0f, // 0
+			
+			+1.0f, +0.0f, 0.0f, // 0
+			+1.0f, +0.0f, 0.0f, // 0
+			+1.0f, +0.0f, 0.0f, // 0
+			+1.0f, +0.0f, 0.0f, // 0
 	};
 	unsigned int indices[] = {
 			0, 1, 2,
@@ -232,10 +261,7 @@ int main() {
 			7, 6, 5,
 			
 			8, 9, 10,
-			10, 11, 8,
-			
-			12, 13, 14,
-			14, 15, 12,
+			10, 11, 8
 	};
 	
 	float colors[] = {
@@ -253,11 +279,6 @@ int main() {
 			COLOR(0.0f, 0.0f, 255.f),
 			COLOR(0.0f, 0.0f, 255.f),
 			COLOR(0.0f, 0.0f, 255.f),
-			
-			COLOR(0.0f, 255.0f, 0.f),
-			COLOR(0.0f, 255.0f, 0.f),
-			COLOR(0.0f, 255.0f, 0.f),
-			COLOR(0.0f, 255.0f, 0.f),
 	};
 	
 	unsigned int buffers[3];
@@ -269,7 +290,7 @@ int main() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr);
 	
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(normals), normals, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr);
 	
@@ -301,9 +322,34 @@ int main() {
 
 void draw(unsigned int shader) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glm::mat4 m = mpv();
+	glm::mat4 mvpMat = mpv();
+	glm::mat4 mvMat = mv();
+	glm::mat4 nmMat = nm();
 	
 	int loc = glGetUniformLocation(shader, "mvp");
-	glUniformMatrix4fv(loc, 1, false, glm::value_ptr(m));
-	glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, nullptr);
+	glUniformMatrix4fv(loc, 1, false, glm::value_ptr(mvpMat));
+	int locMV = glGetUniformLocation(shader, "mv");
+	glUniformMatrix4fv(locMV, 1, false, glm::value_ptr(mvMat));
+	int locNM = glGetUniformLocation(shader, "nm");
+	glUniformMatrix4fv(locNM, 1, false, glm::value_ptr(nmMat));
+	
+	glm::vec4 ambient = glm::vec4(0.21f, 0.13f, 0.05f, 1.0f);
+	glm::vec4 bronzeDiffuse = glm::vec4(0.71f, 0.43f, 0.18f, 1.0f);
+	glm::vec4 bronzeSpecular = glm::vec4(0.39f, 0.27f, 0.17f, 1.0f);
+	float shininess = 128;
+	
+	int locAmb = glGetUniformLocation(shader, "ka");
+	int locDiff = glGetUniformLocation(shader, "kd");
+	int locSpec = glGetUniformLocation(shader, "ks");
+	int locShine = glGetUniformLocation(shader, "shi");
+	glUniform4fv(locAmb, 1, glm::value_ptr(ambient));
+	glUniform4fv(locDiff, 1, glm::value_ptr(bronzeDiffuse));
+	glUniform4fv(locSpec, 1, glm::value_ptr(bronzeSpecular));
+	glUniform1f(locShine, shininess);
+	
+	glm::vec3 leye = glm::vec3(0.0f, 20.0f, -3.0f);
+	int locLight = glGetUniformLocation(shader, "leye");
+	glUniform3fv(locLight, 1, glm::value_ptr(leye));
+	
+	glDrawElements(GL_TRIANGLES, 24 - 6, GL_UNSIGNED_INT, nullptr);
 }
